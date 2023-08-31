@@ -1,0 +1,16 @@
+version: "3.9"
+
+services:
+  backend:
+    container_name: cheese-backend
+    image: docker.antares-software.ru/asg/cheese/cheese-backend:main
+    ports:
+      - "10001:8080"
+    networks:
+      - ecom
+    volumes:
+      - "./server_config.yml:/app/server_config.yml"
+
+networks:
+  ecom:
+    driver: bridge
