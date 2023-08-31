@@ -1,16 +1,11 @@
 version: "3.9"
 
 services:
-  backend:
-    container_name: cheese-backend
-    image: docker.antares-software.ru/asg/cheese/cheese-backend:main
-    ports:
-      - "10001:8080"
-    networks:
-      - ecom
+  ci-cd-helper:
+    image: ci-cd-helper
+    container_name: ci-cd-helper
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
-      - "./server_config.yml:/app/server_config.yml"
-
-networks:
-  ecom:
-    driver: bridge
+      - "./settings.json:/app/settings.json"
