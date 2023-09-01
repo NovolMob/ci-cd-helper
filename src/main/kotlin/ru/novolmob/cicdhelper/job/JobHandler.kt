@@ -32,9 +32,7 @@ class JobHandler(
                 gitlabToken = settings.gitlabToken
             )
             jobPool.jobs.forEach { notifiedJob ->
-                scope.launch {
-                    resolveJob(gitlabRepository = gitlabRepository, job = notifiedJob)
-                }
+                resolveJob(gitlabRepository = gitlabRepository, job = notifiedJob)
             }
             delay(duration = delay)
         }

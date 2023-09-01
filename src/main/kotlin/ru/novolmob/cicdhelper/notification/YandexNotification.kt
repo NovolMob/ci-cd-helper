@@ -14,7 +14,24 @@ class YandexNotification(
     private val logger = LogManager.getLogger(this::class)
     private val mutex = Mutex()
     private val scope = CoroutineScope(SupervisorJob())
-    private var job: Job? = null
+    private var job: Job = scope.launch {
+        val iterator = notificationQueue.iterator()
+        while (iterator.hasNext()) {
+            val scenario = iterator.next()
+            repository.scenarioActions(scenarioId = scenario.yandexScenarioId)?.let {
+                if (it.status.lowercase() == "ok") {
+                    logger.info("Started ${scenario.yandexScenarioId} Yandex scenario!")
+                } else null
+            } ?: logger.warn("Failed to start ${scenario.yandexScenarioId} Yandex scenario!")
+            scenario.yandexDelay?.let {
+                delay(timeMillis = it)
+            }
+        }
+        mutex.withLock {
+            notificationQueue.clear()
+            startSendingNotification()
+        }
+    }
 
     suspend fun addToQueue(scenario: YandexScenario) {
         mutex.withLock {
@@ -23,27 +40,9 @@ class YandexNotification(
         }
     }
 
-    private suspend fun startSendingNotification() {
-        if (job == null && notificationQueue.isNotEmpty()) {
-            job = scope.launch {
-                val iterator = notificationQueue.iterator()
-                while (iterator.hasNext()) {
-                    val scenario = iterator.next()
-                    repository.scenarioActions(scenarioId = scenario.yandexScenarioId)?.let {
-                        if (it.status.lowercase() == "ok") {
-                            logger.info("Started ${scenario.yandexScenarioId} Yandex scenario!")
-                        } else null
-                    } ?: logger.warn("Failed to start ${scenario.yandexScenarioId} Yandex scenario!")
-                    scenario.yandexDelay?.let {
-                        delay(timeMillis = it)
-                    }
-                }
-                mutex.withLock {
-                    notificationQueue.clear()
-                    job = null
-                    startSendingNotification()
-                }
-            }
+    private fun startSendingNotification() {
+        if (notificationQueue.isNotEmpty()) {
+            job.start()
         }
     }
 
