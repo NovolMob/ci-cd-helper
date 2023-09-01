@@ -14,7 +14,9 @@ class YandexNotification(
     private val logger = LogManager.getLogger(this::class)
     private val mutex = Mutex()
     private val scope = CoroutineScope(SupervisorJob())
-    private var job: Job = scope.launch {
+    private var job: Job = scope.launch(
+        context = newSingleThreadContext("YandexNotification")
+    ) {
         val iterator = notificationQueue.iterator()
         while (iterator.hasNext()) {
             val scenario = iterator.next()

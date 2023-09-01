@@ -2,10 +2,9 @@
 
 package ru.novolmob.cicdhelper.settings
 
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -24,6 +23,8 @@ class SettingsService(
         isLenient = true
     }
 ) {
+    @OptIn(InternalCoroutinesApi::class)
+    private val context = Dispatchers.IO.newCoroutineContext(addedContext = newFixedThreadPoolContext(nThreads = 5, name = "SettingsService"))
     private val logger = LogManager.getLogger(this::class)
     private val mutex = Mutex()
     private var lastSettingUpdate: Long = 0
@@ -51,7 +52,7 @@ class SettingsService(
     suspend fun getSettings(): Settings {
         mutex.withLock {
             if (!settingsFile.exists()) {
-                withContext(Dispatchers.IO) {
+                withContext(context) {
                     settings = loadOrCreateSettings()
                     lastSettingUpdate = settingsFile.lastModified()
                     logger.info("Default settings created!")
@@ -59,7 +60,7 @@ class SettingsService(
             } else {
                 val update = settingsFile.lastModified()
                 if (update != lastSettingUpdate) {
-                    withContext(Dispatchers.IO) {
+                    withContext(context) {
                         settings = try {
                             loadSettings()
                         } catch (e: Exception) {

@@ -1,10 +1,7 @@
 package ru.novolmob.cicdhelper.job
 
+import kotlinx.coroutines.*
 import ru.novolmob.cicdhelper.gitlab.GitlabRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import ru.novolmob.cicdhelper.models.NotifiedJob
 import ru.novolmob.cicdhelper.models.Settings
 import ru.novolmob.cicdhelper.notification.NotificationService
@@ -23,7 +20,9 @@ class JobHandler(
 ) {
     private val logger = LogManager.getLogger(this::class)
 
-    suspend fun start() = scope.launch {
+    suspend fun start() = scope.launch(
+        context = newSingleThreadContext("JobHandler")
+    ) {
         logger.info("Job handler is started!")
         while (true) {
             val settings = getSettings()
